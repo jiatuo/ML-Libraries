@@ -1,0 +1,158 @@
+"""
+Do not change the input and output format.
+If our script cannot run your code or the format is improper, your code will not be graded.
+
+The only functions you need to implement in this template is linear_regression_noreg, linear_regression_invertible，regularized_linear_regression,
+tune_lambda, test_error and mapping_data.
+"""
+
+import numpy as np
+import pandas as pd
+import copy
+
+###### Q1.1 ######
+def mean_square_error(w, X, y):
+    """
+    Compute the mean squre error on test set given X, y, and model parameter w.
+    Inputs:
+    - X: A numpy array of shape (num_samples, D) containing test feature.
+    - y: A numpy array of shape (num_samples, ) containing test label
+    - w: a numpy array of shape (D, )
+    Returns:
+    - err: the mean square error
+    """
+    #####################################################
+    # TODO 1: Fill in your code here #
+    #####################################################
+    X_w = np.matmul(X, w)
+    err = np.mean(np.square(X_w - y))
+    
+    return err
+
+###### Q1.2 ######
+def linear_regression_noreg(X, y):
+  """
+  Compute the weight parameter given X and y.
+  Inputs:
+  - X: A numpy array of shape (num_samples, D) containing feature.
+  - y: A numpy array of shape (num_samples, ) containing label
+  Returns:
+  - w: a numpy array of shape (D, )
+  """
+  #####################################################
+  #	TODO 2: Fill in your code here #
+  #####################################################		
+  inverse = np.linalg.inv(np.dot(X.T, X))
+  X_T_y = np.dot(X.T, y)
+  w = np.dot(inverse, X_T_y)
+  return w
+
+###### Q1.3 ######
+def linear_regression_invertible(X, y):
+    """
+    Compute the weight parameter given X and y.
+    Inputs:
+    - X: A numpy array of shape (num_samples, D) containing feature.
+    - y: A numpy array of shape (num_samples, ) containing label
+    Returns:
+    - w: a numpy array of shape (D, )
+    """
+    #####################################################
+    # TODO 3: Fill in your code here #
+    #####################################################
+    X_T_X = np.dot(X.T, X)
+    I = np.identity(X_T_X.shape[0])
+    # print(eigenval)
+    # print("X SHAPE: ", X_T_X.shape)
+    # print("EIG SHAPE: ", eigenval.shape)
+    # print("SORTED: ",eigenval)
+    min_eigen = 0
+    while(min_eigen < 10e-5):
+      eigenval, eigenvec = np.linalg.eig(X_T_X)
+      eigenval = np.sort(np.absolute(eigenval))
+      min_eigen = eigenval[0]
+      if(min_eigen >= 10e-5):
+        break
+      X_T_X = X_T_X + 0.1 * I
+    inverse = np.linalg.inv(X_T_X)
+    X_T_y = np.dot(X.T, y)
+    w = np.dot(inverse, X_T_y)
+  
+
+
+    return w
+
+#def invertible(X):
+
+
+
+###### Q1.4 ######
+def regularized_linear_regression(X, y, lambd):
+    """
+    Compute the weight parameter given X, y and lambda.
+    Inputs:
+    - X: A numpy array of shape (num_samples, D) containing feature.
+    - y: A numpy array of shape (num_samples, ) containing label
+    - lambd: a float number containing regularization strength
+    Returns:
+    - w: a numpy array of shape (D, )
+    """
+  #####################################################
+  # TODO 4: Fill in your code here #
+  #####################################################		
+    X_T_X = np.dot(X.T, X)
+    I = np.identity(X_T_X.shape[0])
+    X_T_X += lambd * I
+    inverse = np.linalg.inv(X_T_X)
+    X_T_y = np.dot(X.T, y)
+    w = np.dot(inverse, X_T_y)
+    return w
+
+###### Q1.5 ######
+def tune_lambda(Xtrain, ytrain, Xval, yval):
+    """
+    Find the best lambda value.
+    Inputs:
+    - Xtrain: A numpy array of shape (num_training_samples, D) containing training feature.
+    - ytrain: A numpy array of shape (num_training_samples, ) containing training label
+    - Xval: A numpy array of shape (num_val_samples, D) containing validation feature.
+    - yval: A numpy array of shape (num_val_samples, ) containing validation label
+    Returns:
+    - bestlambda: the best lambda you find in lambds
+    """
+    #####################################################
+    # TODO 5: Fill in your code here #
+    #####################################################
+    powers = [1 * 10 ** exp for exp in range(-19, 20)]
+    #print(powers)
+    best_MSE = 1000000000000000
+    bestlambda = None
+    for p in powers:
+      w = regularized_linear_regression(Xtrain, ytrain, p)
+      MSE = mean_square_error(w, Xval, yval)
+      if(MSE < best_MSE):
+        best_MSE = MSE
+        bestlambda = p
+    return bestlambda
+    
+
+###### Q1.6 ######
+def mapping_data(X, power):
+    """
+    Mapping the data.
+    Inputs:
+    - X: A numpy array of shape (num_training_samples, D) containing training feature.
+    - power: A integer that indicate the power in polynomial regression
+    Returns:
+    - X: mapped_X, You can manully calculate the size of X based on the power and original size of X
+    """
+    #####################################################
+    # TODO 6: Fill in your code here #
+    #####################################################		
+    original_X = copy.deepcopy(X)
+    for i in range(2, power + 1):
+      to_be_added = np.power(original_X, i)
+      X = np.hstack((X, to_be_added))
+    return X
+
+
